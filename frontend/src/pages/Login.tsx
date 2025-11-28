@@ -20,10 +20,10 @@ const Login = () => {
     password: ""
   });
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const success = login(formData.email, formData.password);
+    const success = await login(formData.email, formData.password);
     
     if (success) {
       toast({
@@ -39,6 +39,7 @@ const Login = () => {
       });
     }
   };
+
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center p-4">
