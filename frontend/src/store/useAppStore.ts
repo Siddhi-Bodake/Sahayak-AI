@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Language, User, TransactionSummary, ExpenseCategory, CoachingTip, Scheme, ChatMessage, FinancialHealthScore, Role } from '@/types/types';
 import { mockUser, mockTransactionSummary, mockExpenseCategories, mockCoachingTips, mockSchemes, mockChatMessages } from '@/data/data';
+import { authService } from '@/api/services/auth';
 
 interface AppState {
   language: Language;
@@ -13,12 +14,12 @@ interface AppState {
   schemes: Scheme[];
   chatMessages: ChatMessage[];
   financialHealthScore: FinancialHealthScore;
-  
+
   // Actions
   setLanguage: (language: Language) => void;
   setUser: (user: User) => void;
-  login: (email: string, password: string) => boolean;
-  signup: (name: string, email: string, password: string, role: Role, incomeRange: string, fixedExpenses: number) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string, mobileno: string, language: Language) => Promise<boolean>;
   logout: () => void;
   updateProfile: (user: User) => void;
   addChatMessage: (message: ChatMessage) => void;
@@ -27,8 +28,8 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
-      language: 'en',
+    (set): AppState => ({
+      language: 'en' as Language,
       user: null,
       isAuthenticated: false,
       transactionSummary: [],
@@ -44,78 +45,66 @@ export const useAppStore = create<AppState>()(
       },
 
       setLanguage: (language) => set({ language }),
-      
+
       setUser: (user) => set({ user, isAuthenticated: true }),
-      
-      login: (email, password) => {
-        // Mock login - in real app, this would call an API
-        const storedUsers = localStorage.getItem('sahayak-users');
-        if (storedUsers) {
-          const users = JSON.parse(storedUsers);
-          const foundUser = users.find((u: any) => u.email === email && u.password === password);
-          if (foundUser) {
-            set({ user: foundUser, isAuthenticated: true });
+
+      login: async (email, password) => {
+        try {
+          const response = await authService.login({ email, password });
+          if (response.access_token) {
+            localStorage.setItem('token', response.access_token);
+
+            // Fetch user data
+            const userData = await authService.getMe();
+            set({ user: userData, isAuthenticated: true });
             return true;
           }
-        }
-        return false;
-      },
-      
-      signup: (name, email, password, role, incomeRange, fixedExpenses) => {
-        // Mock signup - in real app, this would call an API
-        const storedUsers = localStorage.getItem('sahayak-users');
-        const users = storedUsers ? JSON.parse(storedUsers) : [];
-        
-        // Check if user already exists
-        if (users.find((u: any) => u.email === email)) {
+          return false;
+        } catch (error) {
+          console.error('Login error:', error);
           return false;
         }
-        
-        const newUser = {
-          name,
-          email,
-          password,
-          role,
-          incomeRange,
-          fixedExpenses,
-          language: 'en'
-        };
-        
-        users.push(newUser);
-        localStorage.setItem('sahayak-users', JSON.stringify(users));
-        
-        set({ 
-          user: { name, role, incomeRange, fixedExpenses, language: 'en' }, 
-          isAuthenticated: true 
-        });
-        
-        return true;
       },
-      
-      logout: () => set({ 
-        user: null, 
-        isAuthenticated: false,
-        transactionSummary: [],
-        expenseCategories: [],
-        coachingTips: [],
-        schemes: [],
-        chatMessages: [],
-        financialHealthScore: {
-          overall: 0,
-          savingsRate: 0,
-          debtRatio: 0,
-          budgetAdherence: 0
+
+      signup: async (name, email, password, mobileno, language) => {
+        try {
+          await authService.register({ name, email, password, mobileno, language });
+          // After registration, log the user in
+          const loginSuccess = await useAppStore.getState().login(email, password);
+          return loginSuccess;
+        } catch (error) {
+          console.error('Signup error:', error);
+          return false;
         }
-      }),
-      
+      },
+
+      logout: () => {
+        localStorage.removeItem('token');
+        set({
+          user: null,
+          isAuthenticated: false,
+          transactionSummary: [],
+          expenseCategories: [],
+          coachingTips: [],
+          schemes: [],
+          chatMessages: [],
+          financialHealthScore: {
+            overall: 0,
+            savingsRate: 0,
+            debtRatio: 0,
+            budgetAdherence: 0
+          }
+        });
+      },
+
       updateProfile: (user) => set({ user }),
-      
-      addChatMessage: (message) => 
-        set((state) => ({ 
-          chatMessages: [...state.chatMessages, message] 
+
+      addChatMessage: (message) =>
+        set((state) => ({
+          chatMessages: [...state.chatMessages, message]
         })),
-      
-      loadMockData: () => 
+
+      loadMockData: () =>
         set({
           user: mockUser,
           transactionSummary: mockTransactionSummary,
@@ -133,7 +122,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'sahayak-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         language: state.language,
         user: state.user,
         isAuthenticated: state.isAuthenticated
