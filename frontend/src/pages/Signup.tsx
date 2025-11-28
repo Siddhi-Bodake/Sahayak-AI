@@ -6,10 +6,9 @@ import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Role } from "@/types/types";
 import { Sparkles, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -21,23 +20,18 @@ const Signup = () => {
     name: "",
     email: "",
     password: "",
-    role: "" as Role | "",
-    incomeRange: "",
-    fixedExpenses: ""
+    mobileno: "",
   });
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.role) return;
-    
-    const success = signup(
+    const success = await signup(
       formData.name,
       formData.email,
       formData.password,
-      formData.role as Role,
-      formData.incomeRange,
-      parseInt(formData.fixedExpenses)
+      formData.mobileno,
+      language
     );
     
     if (success) {
@@ -55,8 +49,6 @@ const Signup = () => {
       });
     }
   };
-  
-  const roles: Role[] = ["farmer", "student", "self_employed", "salaried", "unemployed", "other"];
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center p-4">
@@ -115,45 +107,13 @@ const Signup = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="role">{translations.onboarding.role}</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value as Role })}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder={translations.onboarding.selectRole} />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {translations.onboarding.roles[role]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="income">{translations.onboarding.income}</Label>
+              <Label htmlFor="mobileno">Phone Number</Label>
               <Input
-                id="income"
-                type="text"
-                placeholder={translations.onboarding.incomePlaceholder}
-                value={formData.incomeRange}
-                onChange={(e) => setFormData({ ...formData, incomeRange: e.target.value })}
-                required
-                className="h-11"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="expenses">{translations.onboarding.expenses}</Label>
-              <Input
-                id="expenses"
-                type="number"
-                placeholder={translations.onboarding.expensesPlaceholder}
-                value={formData.fixedExpenses}
-                onChange={(e) => setFormData({ ...formData, fixedExpenses: e.target.value })}
+                id="mobileno"
+                type="tel"
+                placeholder="Enter your phone number"
+                value={formData.mobileno}
+                onChange={(e) => setFormData({ ...formData, mobileno: e.target.value })}
                 required
                 className="h-11"
               />
