@@ -35,12 +35,11 @@ const Signup = () => {
     );
     
     if (success) {
-      loadMockData();
       toast({
         title: "Success",
-        description: "Account created successfully",
+        description: "Account created successfully. Please login to continue.",
       });
-      navigate("/dashboard");
+      navigate("/login");
     } else {
       toast({
         title: "Error",
