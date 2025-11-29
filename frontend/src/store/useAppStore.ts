@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import { Language, User, TransactionSummary, ExpenseCategory, CoachingTip, Scheme, ChatMessage, FinancialHealthScore, Role } from '@/types/types';
 import { mockUser, mockTransactionSummary, mockExpenseCategories, mockCoachingTips, mockSchemes, mockChatMessages } from '@/data/data';
 import { authService } from '@/api/services/auth';
+import { schemesService } from '@/api/services/schemes';
+import { aiService } from '@/api/services/ai';
 
 interface AppState {
   language: Language;
@@ -13,6 +15,7 @@ interface AppState {
   coachingTips: CoachingTip[];
   schemes: Scheme[];
   chatMessages: ChatMessage[];
+  isChatLoading: boolean;
   financialHealthScore: FinancialHealthScore;
 
   // Actions
@@ -20,9 +23,11 @@ interface AppState {
   setUser: (user: User) => void;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string, mobileno: string, language: Language) => Promise<boolean>;
+  fetchSchemes: () => Promise<void>;
   logout: () => void;
   updateProfile: (user: User) => void;
   addChatMessage: (message: ChatMessage) => void;
+  sendChatMessage: (message: string) => Promise<void>;
   loadMockData: () => void;
 }
 
@@ -37,6 +42,7 @@ export const useAppStore = create<AppState>()(
       coachingTips: [],
       schemes: [],
       chatMessages: [],
+      isChatLoading: false,
       financialHealthScore: {
         overall: 0,
         savingsRate: 0,
@@ -78,6 +84,15 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      fetchSchemes: async () => {
+        try {
+          const schemes = await schemesService.getAllSchemes();
+          set({ schemes });
+        } catch (error) {
+          console.error('Error fetching schemes:', error);
+        }
+      },
+
       logout: () => {
         localStorage.removeItem('token');
         set({
@@ -104,13 +119,61 @@ export const useAppStore = create<AppState>()(
           chatMessages: [...state.chatMessages, message]
         })),
 
+      sendChatMessage: async (message) => {
+        try {
+          // Add user message immediately
+          const userMessage: ChatMessage = {
+            id: `msg-${Date.now()}`,
+            sender: 'user',
+            text: message,
+            timestamp: new Date().toISOString()
+          };
+
+          set((state) => ({
+            chatMessages: [...state.chatMessages, userMessage],
+            isChatLoading: true
+          }));
+
+          // Call AI API
+          const response = await aiService.chat(message);
+
+          // Add AI response
+          const aiMessage: ChatMessage = {
+            id: `msg-${Date.now()}-ai`,
+            sender: 'ai',
+            text: response.response,
+            timestamp: new Date().toISOString()
+          };
+
+          set((state) => ({
+            chatMessages: [...state.chatMessages, aiMessage],
+            isChatLoading: false
+          }));
+        } catch (error) {
+          console.error('Error sending chat message:', error);
+
+          // Add error message
+          const errorMessage: ChatMessage = {
+            id: `msg-${Date.now()}-error`,
+            sender: 'ai',
+            text: 'I apologize, but I encountered an error. Please try again.',
+            timestamp: new Date().toISOString()
+          };
+
+          set((state) => ({
+            chatMessages: [...state.chatMessages, errorMessage],
+            isChatLoading: false
+          }));
+        }
+      },
+
       loadMockData: () =>
         set({
           user: mockUser,
           transactionSummary: mockTransactionSummary,
           expenseCategories: mockExpenseCategories,
           coachingTips: mockCoachingTips,
-          schemes: mockSchemes,
+          schemes: mockSchemes, // Note: mockSchemes type might mismatch now, but we are fetching real data
           chatMessages: mockChatMessages,
           financialHealthScore: {
             overall: 72,
