@@ -1,0 +1,261 @@
+{
+  "info": {
+    "name": "Sahayak AI API Collection",
+    "description": "Complete API collection for Sahayak AI Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8001",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"mobileno\": \"+919876543210\",\n  \"role\": \"farmer\",\n  \"language\": \"hi\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schemes",
+      "item": [
+        {
+          "name": "Get All Schemes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schemes",
+              "host": ["{{base_url}}"],
+              "path": ["schemes"]
+            }
+          }
+        },
+        {
+          "name": "Get Scheme by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schemes/507f1f77bcf86cd799439011",
+              "host": ["{{base_url}}"],
+              "path": ["schemes", "507f1f77bcf86cd799439011"]
+            }
+          }
+        },
+        {
+          "name": "Fetch New Schemes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schemes/fetch",
+              "host": ["{{base_url}}"],
+              "path": ["schemes", "fetch"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Features",
+      "item": [
+        {
+          "name": "Chat with AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Tell me about government financial schemes for farmers\",\n  \"user_id\": \"507f1f77bcf86cd799439011\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chat",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chat"]
+            }
+          }
+        },
+        {
+          "name": "Chat with AI (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What government schemes are available for small farmers?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chat/public",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chat", "public"]
+            }
+          }
+        },
+        {
+          "name": "Get Scheme Explanation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ai/scheme-info/507f1f77bcf86cd799439011",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "scheme-info", "507f1f77bcf86cd799439011"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/507f1f77bcf86cd799439011",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "507f1f77bcf86cd799439011"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Root Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
