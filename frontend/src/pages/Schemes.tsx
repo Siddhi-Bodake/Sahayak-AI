@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { t } from "@/i18n/i18n";
@@ -12,12 +12,16 @@ import { useToast } from "@/hooks/use-toast";
 
 const Schemes = () => {
   const navigate = useNavigate();
-  const { language, user, schemes } = useAppStore();
+  const { language, user, schemes, fetchSchemes } = useAppStore();
   const translations = t(language);
   const { toast } = useToast();
   const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   
+  useEffect(() => {
+    fetchSchemes();
+  }, [fetchSchemes]);
+
   if (!user) {
     navigate("/login");
     return null;
@@ -31,7 +35,7 @@ const Schemes = () => {
   const handleApply = (scheme: Scheme) => {
     toast({
       title: "Application Started",
-      description: `Starting application for ${scheme.name}. Redirecting to application page...`,
+      description: `Starting application for ${scheme.title}. Redirecting to application page...`,
     });
     
     setTimeout(() => {
@@ -39,9 +43,8 @@ const Schemes = () => {
     }, 1500);
   };
   
-  const eligibleSchemes = schemes.filter(scheme => 
-    scheme.eligibleRoles.includes(user.role)
-  );
+  // Client-side filtering by role is removed as backend doesn't return eligibleRoles
+  const eligibleSchemes = schemes;
   
   return (
     <AppLayout>
@@ -65,7 +68,7 @@ const Schemes = () => {
               scheme={scheme}
               onViewDetails={handleViewDetails}
               onApply={handleApply}
-              categoryLabel={translations.schemes.categories[scheme.category]}
+              categoryLabel={scheme.category} // Using category directly as it might not match translation keys exactly
               eligibilityLabel={translations.schemes.eligibility}
               benefitsLabel={translations.schemes.benefits}
               documentsLabel={translations.schemes.documents}

@@ -6,11 +6,11 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/common/Button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 const Chat = () => {
   const navigate = useNavigate();
-  const { language, user, chatMessages, addChatMessage } = useAppStore();
+  const { language, user, chatMessages, isChatLoading, sendChatMessage } = useAppStore();
   const translations = t(language);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -23,26 +23,8 @@ const Chat = () => {
     return null;
   }
   
-  const handleSendMessage = (text: string) => {
-    const userMessage = {
-      id: `msg-${Date.now()}`,
-      sender: "user" as const,
-      text,
-      timestamp: new Date().toISOString()
-    };
-    
-    addChatMessage(userMessage);
-    
-    // Simulate AI response after a short delay
-    setTimeout(() => {
-      const aiMessage = {
-        id: `msg-${Date.now()}-ai`,
-        sender: "ai" as const,
-        text: "Thank you for your question! I'm here to help you with your financial journey. This is a demo response.",
-        timestamp: new Date().toISOString()
-      };
-      addChatMessage(aiMessage);
-    }, 1000);
+  const handleSendMessage = async (text: string) => {
+    await sendChatMessage(text);
   };
   
   return (
@@ -62,6 +44,12 @@ const Chat = () => {
             {chatMessages.map((message) => (
               <ChatBubble key={message.id} message={message} />
             ))}
+            {isChatLoading && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">AI is thinking...</span>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
           
@@ -69,6 +57,7 @@ const Chat = () => {
             <ChatInput
               onSend={handleSendMessage}
               placeholder={translations.chat.inputPlaceholder}
+              disabled={isChatLoading}
             />
           </div>
         </div>
