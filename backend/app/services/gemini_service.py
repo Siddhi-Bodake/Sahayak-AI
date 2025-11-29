@@ -1,11 +1,13 @@
-import httpx
-import json
-import re
+import google.generativeai as genai
 from app.core.config import settings
 
-async def get_scheme_explanation(scheme):
+# Configure Gemini API
+genai.configure(api_key=settings.gemini_api_key)
+
+async def get_scheme_explanation_gemini(scheme):
     """
     Generate a detailed explanation of a government scheme using its name and short description.
+    Uses Google Gemini AI instead of Groq.
     """
     # Clean the scheme data (remove MongoDB _id if present)
     if "_id" in scheme:
@@ -22,12 +24,6 @@ async def get_scheme_explanation(scheme):
     if not short_desc and 'raw_data' in scheme:
         short_desc = scheme['raw_data'].get('description', '')
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {settings.groq_api_key}",
-        "Content-Type": "application/json"
-    }
-
     prompt = f"""You are Sahayak AI, an expert on Indian government schemes.
 
 Based on this scheme information, provide a clear and detailed explanation in English:
@@ -43,37 +39,24 @@ Please explain:
 
 Keep the explanation helpful, accurate, and easy to understand."""
 
-    data = {
-        "model": "mixtral-8x7b-32768",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.7,
-        "max_tokens": 600
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(url, headers=headers, json=data)
-            result = response.json()
+        model = genai.GenerativeModel(settings.gemini_chat_model)
+        response = model.generate_content(prompt)
 
-        if "choices" in result and result["choices"]:
-            return result["choices"][0]["message"]["content"]
+        if response and response.text:
+            return response.text.strip()
         else:
             return f"I apologize, but I'm unable to generate an explanation for the {scheme_name} scheme at the moment. Please try again later."
     except Exception as e:
-        print(f"Error in get_scheme_explanation: {str(e)}")
+        print(f"Error in get_scheme_explanation_gemini: {str(e)}")
         return f"I apologize, but I'm unable to generate an explanation for the {scheme_name} scheme at the moment. Please try again later."
 
-async def process_scheme_data(raw_data):
+async def process_scheme_data_gemini(raw_data):
     """
-    Process raw scraped data through Groq to extract structured scheme information.
+    Process raw scraped data through Gemini to extract structured scheme information.
     This function analyzes the content and creates a proper JSON schema.
+    Uses Google Gemini AI instead of Groq.
     """
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {settings.groq_api_key}",
-        "Content-Type": "application/json"
-    }
-    
     prompt = f"""You are an AI assistant that extracts government financial scheme information from web content.
 
 Analyze the following content and extract structured information about the government scheme.
@@ -99,47 +82,58 @@ Extract and return ONLY a valid JSON object with these exact fields:
 }}
 
 IMPORTANT: Return ONLY the JSON object, no markdown code blocks, no additional text."""
-    
-    data = {
-        "model": "mixtral-8x7b-32768",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.3  # Lower temperature for more consistent structured output
-    }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(url, headers=headers, json=data)
-        result = response.json()
+    try:
+        model = genai.GenerativeModel(settings.gemini_chat_model)
+        response = model.generate_content(prompt)
 
-    if "choices" in result and result["choices"]:
-        content = result["choices"][0]["message"]["content"].strip()
-        
-        # Remove markdown code blocks if present
-        content = re.sub(r'^```json\s*', '', content)
-        content = re.sub(r'^```\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-        content = content.strip()
-        
-        try:
-            structured_data = json.loads(content)
-            # Validate and set defaults
-            return {
-                "name": structured_data.get("name", raw_data.get("title", "Unknown Scheme")),
-                "category": structured_data.get("category", "general"),
-                "shortDescription": structured_data.get("shortDescription", raw_data.get("description", "")[:200]),
-                "eligibility": structured_data.get("eligibility", []),
-                "benefits": structured_data.get("benefits", []),
-                "requiredDocuments": structured_data.get("requiredDocuments", []),
-                "eligibleRoles": structured_data.get("eligibleRoles", ["other"]),
-                "tags": structured_data.get("tags", []),
-                "ageRange": structured_data.get("ageRange"),
-                "incomeLimit": structured_data.get("incomeLimit"),
-                "applicationProcess": structured_data.get("applicationProcess", ""),
-                "officialWebsite": structured_data.get("officialWebsite", raw_data.get("url", ""))
-            }
-        except json.JSONDecodeError as e:
-            print(f"JSON decode error: {e}")
-            print(f"Content received: {content}")
-            # Fallback to basic structure
+        if response and response.text:
+            content = response.text.strip()
+
+            # Remove markdown code blocks if present
+            import re
+            content = re.sub(r'^```json\s*', '', content)
+            content = re.sub(r'^```\s*', '', content)
+            content = re.sub(r'\s*```$', '', content)
+            content = content.strip()
+
+            try:
+                structured_data = json.loads(content)
+                # Validate and set defaults
+                return {
+                    "name": structured_data.get("name", raw_data.get("title", "Unknown Scheme")),
+                    "category": structured_data.get("category", "general"),
+                    "shortDescription": structured_data.get("shortDescription", raw_data.get("description", "")[:200]),
+                    "eligibility": structured_data.get("eligibility", []),
+                    "benefits": structured_data.get("benefits", []),
+                    "requiredDocuments": structured_data.get("requiredDocuments", []),
+                    "eligibleRoles": structured_data.get("eligibleRoles", ["other"]),
+                    "tags": structured_data.get("tags", []),
+                    "ageRange": structured_data.get("ageRange"),
+                    "incomeLimit": structured_data.get("incomeLimit"),
+                    "applicationProcess": structured_data.get("applicationProcess", ""),
+                    "officialWebsite": structured_data.get("officialWebsite", raw_data.get("url", ""))
+                }
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                print(f"Content received: {content}")
+                # Fallback to basic structure
+                return {
+                    "name": raw_data.get("title", "Unknown Scheme"),
+                    "category": "general",
+                    "shortDescription": raw_data.get("description", "")[:200],
+                    "eligibility": [],
+                    "benefits": [],
+                    "requiredDocuments": [],
+                    "eligibleRoles": ["other"],
+                    "tags": [],
+                    "ageRange": None,
+                    "incomeLimit": None,
+                    "applicationProcess": "",
+                    "officialWebsite": raw_data.get("url", "")
+                }
+        else:
+            # Fallback structure
             return {
                 "name": raw_data.get("title", "Unknown Scheme"),
                 "category": "general",
@@ -154,7 +148,8 @@ IMPORTANT: Return ONLY the JSON object, no markdown code blocks, no additional t
                 "applicationProcess": "",
                 "officialWebsite": raw_data.get("url", "")
             }
-    else:
+    except Exception as e:
+        print(f"Error in process_scheme_data_gemini: {str(e)}")
         # Fallback structure
         return {
             "name": raw_data.get("title", "Unknown Scheme"),
@@ -171,20 +166,15 @@ IMPORTANT: Return ONLY the JSON object, no markdown code blocks, no additional t
             "officialWebsite": raw_data.get("url", "")
         }
 
-async def answer_user_query(user_message: str, schemes_data: list):
+async def answer_user_query_gemini(user_message: str, schemes_data: list):
     """
     Use processed scheme data to answer user queries accurately.
+    Uses Google Gemini AI instead of Groq.
     The schemes_data contains properly structured JSON from the database.
     """
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {settings.groq_api_key}",
-        "Content-Type": "application/json"
-    }
-    
     # Limit schemes context to avoid token limits (max 10 schemes at a time)
     limited_schemes = schemes_data[:10] if len(schemes_data) > 10 else schemes_data
-    
+
     # Create concise context with only name and short description for accurate AI responses
     schemes_context = "\n\n".join([
         f"""Scheme {idx+1}: {s.get('name', 'N/A')}
@@ -192,41 +182,28 @@ Description: {s.get('shortDescription', 'N/A')}
 ---"""
         for idx, s in enumerate(limited_schemes)
     ])
-    
+
     system_prompt = """You are Sahayak AI, a helpful assistant for Indian government schemes.
 Answer in English. Be concise and helpful.
 Use the scheme database provided to give accurate information."""
-    
-    user_prompt = f"""Database ({len(limited_schemes)} schemes):
+
+    user_prompt = f"""{system_prompt}
+
+Database ({len(limited_schemes)} schemes):
 {schemes_context}
 
 Question: {user_message}
 
 Answer based on the schemes above."""
-    
-    data = {
-        "model": "mixtral-8x7b-32768",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        "temperature": 0.7,
-        "max_tokens": 800
-    }
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(url, headers=headers, json=data)
-            result = response.json()
+        model = genai.GenerativeModel(settings.gemini_chat_model)
+        response = model.generate_content(user_prompt)
 
-        if "choices" in result and result["choices"]:
-            return result["choices"][0]["message"]["content"]
+        if response and response.text:
+            return response.text.strip()
         else:
-            print(f"Groq API Error Response: {result}")
-            error_message = result.get("error", {}).get("message", "Unknown error")
-            print(f"Error message: {error_message}")
             return "I apologize, but I'm unable to process your question at the moment. Please try again later."
     except Exception as e:
-        print(f"Exception in answer_user_query: {str(e)}")
-        print(f"Exception type: {type(e).__name__}")
+        print(f"Error in answer_user_query_gemini: {str(e)}")
         return f"Error: {str(e)}"

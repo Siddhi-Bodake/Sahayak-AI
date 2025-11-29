@@ -1,6 +1,6 @@
 # Sahayak AI Backend
 
-Backend for Sahayak AI - Financial Assistant for Rural India using FastAPI, MongoDB Atlas, Exa API, Groq API, and WhatsApp Cloud API.
+Backend for Sahayak AI - Financial Assistant for Rural India using FastAPI, MongoDB Atlas, Exa API, Google Gemini AI, and WhatsApp Cloud API.
 
 ## Setup
 
@@ -20,7 +20,9 @@ Backend for Sahayak AI - Financial Assistant for Rural India using FastAPI, Mong
    ```
    MONGO_URI=your_mongo_atlas_connection_string
    EXA_API_KEY=your_exa_api_key
-   GROQ_API_KEY=your_groq_api_key
+   GEMINI_API_KEY=your_gemini_api_key
+   GEMINI_CHAT_MODEL=gemini-2.5-flash
+   GEMINI_EMBED_MODEL=models/embedding-001
    WHATSAPP_TOKEN=your_whatsapp_cloud_api_token
    JWT_SECRET=your_jwt_secret
    ```
@@ -220,7 +222,7 @@ Get all notifications for a user.
 
 - JWT Authentication with password hashing
 - Scheduled scheme fetching every 6 hours using APScheduler
-- AI-powered scheme explanations using Groq API
+- AI-powered scheme explanations using Google Gemini AI
 - WhatsApp notifications for new schemes using WhatsApp Cloud API
 - Multilingual support (English, Hindi, Marathi)
 - MongoDB Atlas integration with Motor async driver

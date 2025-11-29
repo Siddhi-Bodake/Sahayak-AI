@@ -12,3 +12,4 @@ apscheduler==3.10.4
 python-dotenv==1.0.0
 httpx==0.25.2
 exa-py==1.0.0
+google-generativeai==0.3.2

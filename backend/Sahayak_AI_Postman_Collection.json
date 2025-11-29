@@ -1,0 +1,479 @@
+{
+  "info": {
+    "name": "Sahayak AI - Complete Workflow",
+    "description": "Complete API collection for Sahayak AI with Exa → Groq → Database workflow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "sahayak-ai-workflow-v1",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "1. Fetch Schemes (Exa → Groq → DB)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/schemes/fetch",
+          "host": ["{{base_url}}"],
+          "path": ["schemes", "fetch"]
+        },
+        "description": "Triggers the complete data pipeline:\n1. Exa scrapes government scheme websites\n2. Groq processes raw data into structured JSON\n3. Data stored in MongoDB with both raw and processed fields\n4. Users are notified\n\nExpected Response:\n- total_scraped: Number of schemes found by Exa\n- new_schemes_added: Number of new schemes added to database\n- schemes: Array of new scheme objects with id, title, url, category\n\nNote: This may take 30-60 seconds to complete as it processes multiple schemes."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/schemes/fetch",
+              "host": ["{{base_url}}"],
+              "path": ["schemes", "fetch"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"message\": \"Schemes fetched and stored successfully\",\n  \"details\": {\n    \"total_scraped\": 10,\n    \"new_schemes_added\": 5,\n    \"schemes\": [\n      {\n        \"id\": \"674a1b2c3d4e5f6g7h8i9j0k\",\n        \"title\": \"Pradhan Mantri Kisan Samman Nidhi\",\n        \"url\": \"https://pmkisan.gov.in/\",\n        \"category\": \"agriculture\"\n      },\n      {\n        \"id\": \"674a1b2c3d4e5f6g7h8i9j0l\",\n        \"title\": \"Startup India Seed Fund Scheme\",\n        \"url\": \"https://www.startupindia.gov.in/\",\n        \"category\": \"business\"\n      }\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "2. Get All Schemes",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/schemes",
+          "host": ["{{base_url}}"],
+          "path": ["schemes"]
+        },
+        "description": "Retrieves all processed schemes from the database.\n\nEach scheme contains:\n- Basic info: name, category, description\n- Eligibility criteria (array)\n- Benefits (array)\n- Required documents (array)\n- Eligible roles (array)\n- Application process\n- Official website\n- Tags for searching\n- Age and income limits (if applicable)\n- Timestamps (created_at, processed_at)\n\nNote: Run 'Fetch Schemes' first to populate the database."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/schemes",
+              "host": ["{{base_url}}"],
+              "path": ["schemes"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "[\n  {\n    \"id\": \"674a1b2c3d4e5f6g7h8i9j0k\",\n    \"name\": \"Pradhan Mantri Kisan Samman Nidhi\",\n    \"category\": \"agriculture\",\n    \"shortDescription\": \"Income support scheme providing Rs 6,000 per year to small and marginal farmer families.\",\n    \"eligibility\": [\n      \"Small and marginal farmer families\",\n      \"Combined land holding up to 2 hectares\",\n      \"Must be Indian citizen\",\n      \"Valid bank account linked with Aadhaar\"\n    ],\n    \"benefits\": [\n      \"Rs 6,000 per year\",\n      \"Paid in three equal installments\",\n      \"Direct benefit transfer to bank account\"\n    ],\n    \"requiredDocuments\": [\n      \"Aadhaar card\",\n      \"Bank account details\",\n      \"Land ownership documents\"\n    ],\n    \"eligibleRoles\": [\"farmer\"],\n    \"tags\": [\"agriculture\", \"farmer support\", \"PM-KISAN\"],\n    \"ageRange\": null,\n    \"incomeLimit\": \"Land holding up to 2 hectares\",\n    \"applicationProcess\": \"Register through CSCs or official portal\",\n    \"officialWebsite\": \"https://pmkisan.gov.in/\",\n    \"source_url\": \"https://pmkisan.gov.in/\",\n    \"is_new\": true,\n    \"created_at\": \"2025-11-29T10:30:00.000Z\",\n    \"processed_at\": \"2025-11-29T10:30:05.000Z\"\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "3. Get Single Scheme by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/schemes/{{scheme_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["schemes", "{{scheme_id}}"]
+        },
+        "description": "Retrieve detailed information about a specific scheme using its MongoDB ObjectId.\n\nSteps to use:\n1. First, run 'Get All Schemes' to get a list of available schemes\n2. Copy the 'id' field from any scheme\n3. Set it as the 'scheme_id' variable in your environment\n4. Run this request\n\nReturns complete scheme details including all processed fields from Groq."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/schemes/674a1b2c3d4e5f6g7h8i9j0k",
+              "host": ["{{base_url}}"],
+              "path": ["schemes", "674a1b2c3d4e5f6g7h8i9j0k"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"id\": \"674a1b2c3d4e5f6g7h8i9j0k\",\n  \"name\": \"Pradhan Mantri Kisan Samman Nidhi\",\n  \"category\": \"agriculture\",\n  \"shortDescription\": \"Income support scheme providing Rs 6,000 per year to small and marginal farmer families.\",\n  \"eligibility\": [\n    \"Small and marginal farmer families\",\n    \"Combined land holding up to 2 hectares\"\n  ],\n  \"benefits\": [\n    \"Rs 6,000 per year\",\n    \"Direct benefit transfer\"\n  ],\n  \"requiredDocuments\": [\n    \"Aadhaar card\",\n    \"Bank account details\"\n  ],\n  \"eligibleRoles\": [\"farmer\"],\n  \"tags\": [\"agriculture\", \"PM-KISAN\"],\n  \"applicationProcess\": \"Register through CSCs or online\",\n  \"officialWebsite\": \"https://pmkisan.gov.in/\"\n}"
+        },
+        {
+          "name": "Scheme Not Found",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/schemes/invalid_id_12345",
+              "host": ["{{base_url}}"],
+              "path": ["schemes", "invalid_id_12345"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"detail\": \"Scheme not found\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "4. Chat - Farmer Query (Hindi)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"मैं एक किसान हूं और मेरे पास 1.5 हेक्टेयर जमीन है। मेरे लिए कौन सी योजना है?\",\n  \"user_id\": \"test_user_farmer_123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/chat",
+          "host": ["{{base_url}}"],
+          "path": ["chat"]
+        },
+        "description": "Chat with AI bot about farmer schemes.\n\nHow it works:\n1. Bot fetches all processed schemes from database\n2. Sends user query + schemes data to Groq\n3. Groq analyzes user profile (farmer, 1.5 hectares)\n4. Matches with eligible schemes (PM-KISAN)\n5. Returns detailed answer in Hindi with eligibility, benefits, documents, and application process\n\nNote: Requires schemes in database. Run 'Fetch Schemes' first."
+      },
+      "response": [
+        {
+          "name": "Farmer Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"मैं एक किसान हूं और मेरे पास 1.5 हेक्टेयर जमीन है। मेरे लिए कौन सी योजना है?\",\n  \"user_id\": \"test_user_123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/chat",
+              "host": ["{{base_url}}"],
+              "path": ["chat"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"response\": \"आपके लिए PM-KISAN (प्रधानमंत्री किसान सम्मान निधि) योजना उपयुक्त है।\\n\\n**पात्रता**: आप पात्र हैं क्योंकि आपके पास 1.5 हेक्टेयर जमीन है (योजना 2 हेक्टेयर तक के लिए है)\\n\\n**लाभ**:\\n- साल में ₹6,000\\n- तीन किस्तों में ₹2,000 प्रत्येक\\n- सीधे बैंक में ट्रांसफर\\n\\n**आवश्यक दस्तावेज**:\\n- आधार कार्ड\\n- बैंक खाता विवरण\\n- जमीन के कागजात\\n\\n**आवेदन**: CSC या https://pmkisan.gov.in/ पर ऑनलाइन\",\n  \"schemes_count\": 15,\n  \"data_source\": \"processed_schemes_database\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "5. Chat - Student Query (Hindi)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"मैं एक छात्र हूं। मुझे छात्रवृत्ति चाहिए। कौन सी योजना है?\",\n  \"user_id\": \"test_user_student_456\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/chat",
+          "host": ["{{base_url}}"],
+          "path": ["chat"]
+        },
+        "description": "Chat query for student scholarships in Hindi.\n\nBot will:\n- Identify user as student\n- Find education category schemes\n- Provide scholarship options\n- Explain eligibility and application process"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Chat - Startup Query (English)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"I want to start a business. What schemes are available for startups in India?\",\n  \"user_id\": \"test_user_entrepreneur_789\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/chat",
+          "host": ["{{base_url}}"],
+          "path": ["chat"]
+        },
+        "description": "Chat query for startup schemes in English.\n\nBot will:\n- Detect English language\n- Find business category schemes\n- Suggest Startup India Seed Fund, MUDRA, etc.\n- Provide details in English"
+      },
+      "response": [
+        {
+          "name": "Startup Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"I want to start a business. What schemes are available?\",\n  \"user_id\": \"test_user_789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/chat",
+              "host": ["{{base_url}}"],
+              "path": ["chat"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"response\": \"For startups, you have the following schemes:\\n\\n**1. Startup India Seed Fund Scheme**\\n\\nEligibility:\\n- DPIIT recognized startups\\n- Incorporated not more than 2 years ago\\n- Working on innovation\\n\\nBenefits:\\n- Up to Rs 20 lakh as grant\\n- Up to Rs 50 lakh as debt\\n- Mentorship support\\n\\nDocuments:\\n- Certificate of Incorporation\\n- DPIIT Recognition\\n- Business Plan\\n\\nApply: https://www.startupindia.gov.in/\",\n  \"schemes_count\": 15,\n  \"data_source\": \"processed_schemes_database\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "7. Chat - General Query",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"सभी उपलब्ध योजनाओं की सूची बताओ\",\n  \"user_id\": \"test_user_general_101\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/chat",
+          "host": ["{{base_url}}"],
+          "path": ["chat"]
+        },
+        "description": "General query to list all available schemes.\n\nBot will:\n- Provide overview of all schemes\n- Group by category (agriculture, business, education, etc.)\n- Give brief description of each\n- Suggest how to get more details"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Chat - Eligibility Check",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"मैं 25 साल का हूं, बेरोजगार हूं। मेरे लिए कौन सी योजना है?\",\n  \"user_id\": \"test_user_unemployed_202\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/chat",
+          "host": ["{{base_url}}"],
+          "path": ["chat"]
+        },
+        "description": "Query with age and employment status.\n\nBot will:\n- Match age criteria\n- Find schemes for unemployed\n- Suggest skill development, employment schemes\n- Provide relevant guidance"
+      },
+      "response": []
+    },
+    {
+      "name": "9. Get Scheme Explanation (Hindi)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/scheme-info/{{scheme_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["scheme-info", "{{scheme_id}}"]
+        },
+        "description": "Get a simple Hindi explanation of a specific scheme.\n\nSteps:\n1. Get scheme_id from 'Get All Schemes' or 'Fetch Schemes' response\n2. Set it as environment variable\n3. Run this request\n\nReturns: Detailed explanation in simple Hindi language suitable for all users."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/scheme-info/674a1b2c3d4e5f6g7h8i9j0k",
+              "host": ["{{base_url}}"],
+              "path": ["scheme-info", "674a1b2c3d4e5f6g7h8i9j0k"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"explanation\": \"प्रधानमंत्री किसान सम्मान निधि (PM-KISAN) भारत सरकार की एक महत्वपूर्ण योजना है जो छोटे और सीमांत किसानों को आर्थिक सहायता प्रदान करती है।\\n\\nइस योजना के तहत:\\n- पात्र किसान परिवारों को हर साल ₹6,000 की वित्तीय सहायता मिलती है\\n- यह राशि तीन बराबर किस्तों में दी जाती है\\n- पैसा सीधे किसानों के बैंक खाते में ट्रांसफर किया जाता है\\n\\nयह योजना किसानों को कृषि से संबंधित खर्चों के लिए वित्तीय सहायता प्रदान करती है।\"\n}"
+        },
+        {
+          "name": "Scheme Not Found",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/scheme-info/invalid_id",
+              "host": ["{{base_url}}"],
+              "path": ["scheme-info", "invalid_id"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"detail\": \"Scheme not found\"\n}"
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "scheme_id",
+      "value": "674a1b2c3d4e5f6g7h8i9j0k",
+      "type": "string"
+    }
+  ]
+}
