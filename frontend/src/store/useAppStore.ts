@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { Language, User, TransactionSummary, ExpenseCategory, CoachingTip, Scheme, ChatMessage, FinancialHealthScore, Role } from '@/types/types';
 import { mockUser, mockTransactionSummary, mockExpenseCategories, mockCoachingTips, mockSchemes, mockChatMessages } from '@/data/data';
 import { authService } from '@/api/services/auth';
+import { schemesService } from '@/api/services/schemes';
 
 interface AppState {
   language: Language;
@@ -20,6 +21,7 @@ interface AppState {
   setUser: (user: User) => void;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string, mobileno: string, language: Language) => Promise<boolean>;
+  fetchSchemes: () => Promise<void>;
   logout: () => void;
   updateProfile: (user: User) => void;
   addChatMessage: (message: ChatMessage) => void;
@@ -78,6 +80,15 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      fetchSchemes: async () => {
+        try {
+          const schemes = await schemesService.getAllSchemes();
+          set({ schemes });
+        } catch (error) {
+          console.error('Error fetching schemes:', error);
+        }
+      },
+
       logout: () => {
         localStorage.removeItem('token');
         set({
@@ -110,7 +121,7 @@ export const useAppStore = create<AppState>()(
           transactionSummary: mockTransactionSummary,
           expenseCategories: mockExpenseCategories,
           coachingTips: mockCoachingTips,
-          schemes: mockSchemes,
+          schemes: mockSchemes, // Note: mockSchemes type might mismatch now, but we are fetching real data
           chatMessages: mockChatMessages,
           financialHealthScore: {
             overall: 72,

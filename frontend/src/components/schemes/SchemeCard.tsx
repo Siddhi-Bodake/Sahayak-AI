@@ -34,14 +34,14 @@ export const SchemeCard = ({
           <Badge variant="secondary" className="text-xs">
             {categoryLabel}
           </Badge>
-          {scheme.tags.slice(0, 2).map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
+          {scheme.is_new && (
+            <Badge variant="outline" className="text-xs border-green-500 text-green-600">
+              New
             </Badge>
-          ))}
+          )}
         </div>
-        <CardTitle className="text-lg">{scheme.name}</CardTitle>
-        <CardDescription>{scheme.shortDescription}</CardDescription>
+        <CardTitle className="text-lg">{scheme.title}</CardTitle>
+        <CardDescription className="line-clamp-2">{scheme.description}</CardDescription>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col">
@@ -51,14 +51,9 @@ export const SchemeCard = ({
               <CheckCircle className="h-4 w-4 text-success" />
               {eligibilityLabel}
             </h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              {scheme.eligibility.slice(0, 2).map((item, idx) => (
-                <li key={idx} className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {scheme.eligibility}
+            </p>
           </div>
           
           <div>
@@ -66,14 +61,9 @@ export const SchemeCard = ({
               <FileText className="h-4 w-4 text-primary" />
               {benefitsLabel}
             </h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              {scheme.benefits.slice(0, 2).map((item, idx) => (
-                <li key={idx} className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {scheme.benefits}
+            </p>
           </div>
         </div>
         
