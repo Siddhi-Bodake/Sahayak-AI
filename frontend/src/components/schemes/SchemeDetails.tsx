@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { Scheme } from "@/types/types";
 import { Button } from "../common/Button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, FileText, ExternalLink } from "lucide-react";
+import { CheckCircle, FileText, ExternalLink, Loader2, Sparkles } from "lucide-react";
+import { aiService } from "@/api/services/ai";
+import ReactMarkdown from 'react-markdown';
 
 interface SchemeDetailsProps {
   scheme: Scheme | null;
@@ -21,6 +24,28 @@ interface SchemeDetailsProps {
 }
 
 export const SchemeDetails = ({ scheme, isOpen, onClose, onApply, translations }: SchemeDetailsProps) => {
+  const [aiExplanation, setAiExplanation] = useState<string>("");
+  const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+  
+  useEffect(() => {
+    const fetchExplanation = async () => {
+      if (!scheme || !isOpen) return;
+      
+      setIsLoadingExplanation(true);
+      try {
+        const response = await aiService.getSchemeInfo(scheme.id);
+        setAiExplanation(response.explanation);
+      } catch (error) {
+        console.error('Error fetching scheme explanation:', error);
+        setAiExplanation('Unable to load AI explanation at this time.');
+      } finally {
+        setIsLoadingExplanation(false);
+      }
+    };
+    
+    fetchExplanation();
+  }, [scheme, isOpen]);
+  
   if (!scheme) return null;
   
   return (
@@ -37,7 +62,26 @@ export const SchemeDetails = ({ scheme, isOpen, onClose, onApply, translations }
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          <p className="text-muted-foreground">{scheme.description}</p>
+          {aiExplanation && (
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 rounded-lg border border-primary/20">
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-primary" />
+                AI Explanation
+              </h3>
+              {isLoadingExplanation ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Generating explanation...</span>
+                </div>
+              ) : (
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown>{aiExplanation}</ReactMarkdown>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* <p className="text-muted-foreground">{scheme.description}</p> */}
           
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
