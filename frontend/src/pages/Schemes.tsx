@@ -33,14 +33,15 @@ const Schemes = () => {
   };
   
   const handleApply = (scheme: Scheme) => {
-    toast({
-      title: "Application Started",
-      description: `Starting application for ${scheme.title}. Redirecting to application page...`,
-    });
-    
-    setTimeout(() => {
-      navigate("/application/app1");
-    }, 1500);
+    if (scheme.source_url) {
+      window.open(scheme.source_url, '_blank');
+    } else {
+      toast({
+        title: "No Application Link",
+        description: "Sorry, no application link is available for this scheme.",
+        variant: "destructive"
+      });
+    }
   };
   
   // Client-side filtering by role is removed as backend doesn't return eligibleRoles
@@ -68,7 +69,7 @@ const Schemes = () => {
               scheme={scheme}
               onViewDetails={handleViewDetails}
               onApply={handleApply}
-              categoryLabel={scheme.category} // Using category directly as it might not match translation keys exactly
+              categoryLabel={scheme.category}
               eligibilityLabel={translations.schemes.eligibility}
               benefitsLabel={translations.schemes.benefits}
               documentsLabel={translations.schemes.documents}
