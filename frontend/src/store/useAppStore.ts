@@ -4,6 +4,7 @@ import { Language, User, TransactionSummary, ExpenseCategory, CoachingTip, Schem
 import { mockUser, mockTransactionSummary, mockExpenseCategories, mockCoachingTips, mockSchemes, mockChatMessages } from '@/data/data';
 import { authService } from '@/api/services/auth';
 import { schemesService } from '@/api/services/schemes';
+import { aiService } from '@/api/services/ai';
 
 interface AppState {
   language: Language;
@@ -14,6 +15,7 @@ interface AppState {
   coachingTips: CoachingTip[];
   schemes: Scheme[];
   chatMessages: ChatMessage[];
+  isChatLoading: boolean;
   financialHealthScore: FinancialHealthScore;
 
   // Actions
@@ -25,6 +27,7 @@ interface AppState {
   logout: () => void;
   updateProfile: (user: User) => void;
   addChatMessage: (message: ChatMessage) => void;
+  sendChatMessage: (message: string) => Promise<void>;
   loadMockData: () => void;
 }
 
@@ -39,6 +42,7 @@ export const useAppStore = create<AppState>()(
       coachingTips: [],
       schemes: [],
       chatMessages: [],
+      isChatLoading: false,
       financialHealthScore: {
         overall: 0,
         savingsRate: 0,
@@ -114,6 +118,54 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           chatMessages: [...state.chatMessages, message]
         })),
+
+      sendChatMessage: async (message) => {
+        try {
+          // Add user message immediately
+          const userMessage: ChatMessage = {
+            id: `msg-${Date.now()}`,
+            sender: 'user',
+            text: message,
+            timestamp: new Date().toISOString()
+          };
+
+          set((state) => ({
+            chatMessages: [...state.chatMessages, userMessage],
+            isChatLoading: true
+          }));
+
+          // Call AI API
+          const response = await aiService.chat(message);
+
+          // Add AI response
+          const aiMessage: ChatMessage = {
+            id: `msg-${Date.now()}-ai`,
+            sender: 'ai',
+            text: response.response,
+            timestamp: new Date().toISOString()
+          };
+
+          set((state) => ({
+            chatMessages: [...state.chatMessages, aiMessage],
+            isChatLoading: false
+          }));
+        } catch (error) {
+          console.error('Error sending chat message:', error);
+
+          // Add error message
+          const errorMessage: ChatMessage = {
+            id: `msg-${Date.now()}-error`,
+            sender: 'ai',
+            text: 'I apologize, but I encountered an error. Please try again.',
+            timestamp: new Date().toISOString()
+          };
+
+          set((state) => ({
+            chatMessages: [...state.chatMessages, errorMessage],
+            isChatLoading: false
+          }));
+        }
+      },
 
       loadMockData: () =>
         set({
