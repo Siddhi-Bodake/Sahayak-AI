@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from app.models.user_model import User
+from app.models.user_model import User, Language, Role
 from app.core.database import users_collection
 from app.core.security import get_password_hash, verify_password, create_access_token, verify_token
 from pydantic import BaseModel
@@ -14,7 +14,8 @@ class UserCreate(BaseModel):
     email: str
     password: str
     mobileno: str
-    language: str = "en"
+    role: Role = "other"
+    language: Language = "en"
 
 class UserLogin(BaseModel):
     email: str
@@ -43,7 +44,6 @@ async def register(user: UserCreate):
     hashed_password = get_password_hash(user.password)
     user_dict = user.dict()
     user_dict["password"] = hashed_password
-    user_dict["role"] = "user"
     result = await users_collection.insert_one(user_dict)
     return {"message": "User registered successfully"}
 
